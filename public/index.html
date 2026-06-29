@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gelo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d0d0d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: #1a1a1a;
+      padding: 40px 32px;
+      border-radius: 24px;
+      max-width: 400px;
+      width: 100%;
+      border: 1px solid rgba(255, 69, 0, 0.15);
+      box-shadow: 0 0 60px rgba(255, 69, 0, 0.1);
+    }
+
+    .logo {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff4500, #ff6a00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #ff6a00;
+      font-size: 14px;
+      letter-spacing: 4px;
+      opacity: 0.6;
+      margin-bottom: 28px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: #222;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+
+    .tabs.hidden {
+      display: none;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      color: #888;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #ff4500, #ff6a00);
+      color: #fff;
+    }
+
+    .tab:hover { color: #fff; }
+
+    .hidden { display: none !important; }
+
+    input {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #121212;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      width: 100%;
+      margin-bottom: 12px;
+      transition: border 0.2s;
+    }
+
+    input:focus { border-color: #ff6a00; }
+    input::placeholder { color: #555; }
+
+    input.error {
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    input.error::placeholder {
+      color: #ff4444;
+    }
+
+    .btn {
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ff4500, #ff6a00);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 69, 0, 0.3); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .message {
+      text-align: center;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 10px;
+      margin: 12px 0;
+      display: none;
+    }
+
+    .message.error { display: block; background: rgba(255, 0, 0, 0.1); color: #ff4444; border: 1px solid rgba(255, 0, 0, 0.2); }
+    .message.success { display: block; background: rgba(0, 255, 0, 0.1); color: #44ff44; border: 1px solid rgba(0, 255, 0, 0.2); }
+    .message.info { display: block; background: rgba(0, 100, 255, 0.1); color: #4488ff; border: 1px solid rgba(0, 100, 255, 0.2); }
+
+    .hint {
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .code-info {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .code-info span { color: #fff; font-weight: 600; }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #ff6a00;
+      cursor: pointer;
+      font-size: 13px;
+      display: block;
+      margin: 8px auto 0;
+    }
+
+    .back-btn:hover { text-decoration: underline; }
+
+    .step {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">gelo</div>
+    <div class="subtitle">✦ your flow ✦</div>
+
+    <!-- ВКЛАДКИ -->
+    <div class="tabs" id="tabsContainer">
+      <button class="tab active" data-action="login">Вход</button>
+      <button class="tab" data-action="register">Регистрация</button>
+    </div>
+
+    <!-- ШАГ 1: ВВОД -->
+    <div id="stepIdentifier">
+      <input type="text" id="identifierInput" placeholder="Телефон или email" />
+      <button class="btn" id="sendCodeBtn">Получить код</button>
+      <div id="identifierMessage" class="message"></div>
+    </div>
+
+    <!-- ШАГ 2: КОД -->
+    <div id="stepCode" class="hidden">
+      <div class="code-info">
+        Код отправлен на <span id="targetDisplay">...</span>
+      </div>
+
+      <input type="text" id="codeInput" placeholder="Код" maxlength="6" />
+      <div id="codeMessage" class="message"></div>
+
+      <button class="btn" id="verifyCodeBtn">Войти</button>
+
+      <button class="back-btn" id="backToIdentifierBtn">← Изменить</button>
+      <div class="hint">Заглушка: 123456</div>
+    </div>
+
+    <!-- ШАГ 3: ИМЯ -->
+    <div id="stepUsername" class="hidden">
+      <input type="text" id="usernameInput" placeholder="Придумайте имя" />
+      <button class="btn" id="registerBtn">Зарегистрироваться</button>
+      <div id="usernameMessage" class="message"></div>
+      <button class="back-btn" id="backToCodeBtn">← Назад</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== ЭЛЕМЕНТЫ =====
+    const stepIdentifier = document.getElementById('stepIdentifier');
+    const stepCode = document.getElementById('stepCode');
+    const stepUsername = document.getElementById('stepUsername');
+    const tabsContainer = document.getElementById('tabsContainer');
+
+    const identifierInput = document.getElementById('identifierInput');
+    const codeInput = document.getElementById('codeInput');
+    const usernameInput = document.getElementById('usernameInput');
+
+    const sendCodeBtn = document.getElementById('sendCodeBtn');
+    const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+    const registerBtn = document.getElementById('registerBtn');
+
+    const identifierMessage = document.getElementById('identifierMessage');
+    const codeMessage = document.getElementById('codeMessage');
+    const usernameMessage = document.getElementById('usernameMessage');
+    const targetDisplay = document.getElementById('targetDisplay');
+
+    let identifier = '';
+    let currentAction = 'login';
+
+    // ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentAction = tab.dataset.action;
+
+        if (currentAction === 'login') {
+          verifyCodeBtn.textContent = 'Войти';
+        } else {
+          verifyCodeBtn.textContent = 'Зарегистрироваться';
+        }
+
+        document.querySelectorAll('.message').forEach(el => el.className = 'message');
+        codeInput.classList.remove('error');
+        codeInput.placeholder = 'Код';
+      });
+    });
+
+    // ===== ОПРЕДЕЛЕНИЕ ТИПА =====
+    function detectType(input) {
+      input = input.trim();
+      if (input.includes('@') && input.includes('.')) return 'email';
+      return 'phone';
+    }
+
+    // ===== ПЕРЕКЛЮЧЕНИЕ БЛОКОВ =====
+    function showStep(step) {
+      [stepIdentifier, stepCode, stepUsername].forEach(el => el.classList.add('hidden'));
+      step.classList.remove('hidden');
+      document.querySelectorAll('.message').forEach(el => el.className = 'message');
+      codeInput.classList.remove('error');
+      codeInput.placeholder = 'Код';
+    }
+
+    function hideTabs() {
+      tabsContainer.classList.add('hidden');
+    }
+
+    function showTabs() {
+      tabsContainer.classList.remove('hidden');
+    }
+
+    // ===== ОТПРАВКА КОДА =====
+    sendCodeBtn.addEventListener('click', async () => {
+      identifier = identifierInput.value.trim();
+
+      if (!identifier) {
+        identifierMessage.textContent = '⚠️ Введите номер телефона или email';
+        identifierMessage.className = 'message error';
+        return;
+      }
+
+      sendCodeBtn.disabled = true;
+      identifierMessage.textContent = '⏳ Отправляем...';
+      identifierMessage.className = 'message info';
+
+      // ✅ ПЕРЕДАЁМ action
+      const res = await fetch('/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          identifier: identifier, 
+          action: currentAction 
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        targetDisplay.textContent = identifier;
+        identifierMessage.textContent = '✅ Код отправлен';
+        identifierMessage.className = 'message success';
+        hideTabs();
+        showStep(stepCode);
+        codeInput.focus();
+        codeInput.value = '';
+        codeInput.classList.remove('error');
+        codeInput.placeholder = 'Код';
+        codeMessage.className = 'message';
+      } else {
+        identifierMessage.textContent = '❌ ' + data.error;
+        identifierMessage.className = 'message error';
+        sendCodeBtn.disabled = false;
+      }
+    });
+
+    // ===== ПРОВЕРКА КОДА =====
+    verifyCodeBtn.addEventListener('click', async () => {
+      const code = codeInput.value.trim();
+
+      if (!code) {
+        return;
+      }
+
+      verifyCodeBtn.disabled = true;
+      codeInput.classList.remove('error');
+      codeInput.placeholder = 'Код';
+      codeMessage.className = 'message';
+
+      const res = await fetch('/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          identifier: identifier, 
+          code: code,
+          action: currentAction 
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        codeInput.classList.add('error');
+        codeInput.placeholder = 'Неверный код';
+        codeInput.value = '';
+        codeInput.focus();
+        verifyCodeBtn.disabled = false;
+        return;
+      }
+
+      if (currentAction === 'login') {
+        if (data.action === 'login') {
+          codeMessage.textContent = 'Добро пожаловать, ' + data.user.username + '!';
+          codeMessage.className = 'message success';
+          localStorage.setItem('gelo_user', JSON.stringify(data.user));
+          setTimeout(() => {
+            window.location.href = '/chat.html';
+          }, 800);
+        } else {
+          codeMessage.textContent = '❌ Пользователь не найден. Нажмите "Регистрация"';
+          codeMessage.className = 'message error';
+          verifyCodeBtn.disabled = false;
+        }
+        return;
+      }
+
+      if (currentAction === 'register') {
+        if (data.action === 'register_needed') {
+          codeMessage.textContent = '✅ Подтверждено! Придумайте имя.';
+          codeMessage.className = 'message success';
+          showStep(stepUsername);
+          usernameInput.focus();
+          verifyCodeBtn.disabled = false;
+        } else if (data.action === 'login') {
+          codeMessage.textContent = '❌ Этот номер/email уже зарегистрирован. Войдите!';
+          codeMessage.className = 'message error';
+          verifyCodeBtn.disabled = false;
+        }
+      }
+    });
+
+    // ===== УБИРАЕМ ОШИБКУ ПРИ ВВОДЕ =====
+    codeInput.addEventListener('input', () => {
+      if (codeInput.classList.contains('error')) {
+        codeInput.classList.remove('error');
+        codeInput.placeholder = 'Код';
+      }
+    });
+
+    // ===== РЕГИСТРАЦИЯ =====
+    registerBtn.addEventListener('click', async () => {
+      const username = usernameInput.value.trim();
+
+      if (!username) {
+        usernameMessage.textContent = '⚠️ Придумайте имя';
+        usernameMessage.className = 'message error';
+        return;
+      }
+
+      registerBtn.disabled = true;
+      usernameMessage.textContent = '⏳ Создаём...';
+      usernameMessage.className = 'message info';
+
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, username })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        usernameMessage.textContent = 'Добро пожаловать, ' + username + '!';
+        usernameMessage.className = 'message success';
+        localStorage.setItem('gelo_user', JSON.stringify(data.user));
+        setTimeout(() => {
+          window.location.href = '/chat.html';
+        }, 800);
+      } else {
+        usernameMessage.textContent = '❌ ' + data.error;
+        usernameMessage.className = 'message error';
+        registerBtn.disabled = false;
+      }
+    });
+
+    // ===== НАЗАД =====
+    document.getElementById('backToIdentifierBtn').addEventListener('click', () => {
+      showStep(stepIdentifier);
+      showTabs();
+      sendCodeBtn.disabled = false;
+      verifyCodeBtn.disabled = false;
+      codeMessage.className = 'message';
+      codeInput.classList.remove('error');
+      codeInput.placeholder = 'Код';
+      const activeTab = document.querySelector('.tab.active');
+      if (activeTab) {
+        currentAction = activeTab.dataset.action;
+        if (currentAction === 'login') {
+          verifyCodeBtn.textContent = 'Войти';
+        } else {
+          verifyCodeBtn.textContent = 'Зарегистрироваться';
+        }
+      }
+    });
+
+    document.getElementById('backToCodeBtn').addEventListener('click', () => {
+      showStep(stepCode);
+      registerBtn.disabled = false;
+      usernameMessage.className = 'message';
+    });
+
+    // ===== ENTER =====
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (!stepIdentifier.classList.contains('hidden')) sendCodeBtn.click();
+        else if (!stepCode.classList.contains('hidden')) verifyCodeBtn.click();
+        else if (!stepUsername.classList.contains('hidden')) registerBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
